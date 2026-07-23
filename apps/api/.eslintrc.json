@@ -1,0 +1,1 @@
+{"extends":["eslint:recommended","plugin:prettier/recommended"],"parser":"@typescript-eslint/parser","plugins":["@typescript-eslint"],"parserOptions":{"project":"./tsconfig.json"},"env":{"node":true,"es2023":true},"ignorePatterns":["dist","generated"]}

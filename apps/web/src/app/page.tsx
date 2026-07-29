@@ -1,9 +1,10 @@
 import { Store, Truck, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
   return <main className="mx-auto max-w-6xl px-6 py-20">
-    <nav className="flex items-center justify-between"><span className="text-xl font-bold tracking-tight">NOVA</span><Button variant="outline">Sign in</Button></nav>
+    <nav className="flex items-center justify-between"><span className="text-xl font-bold tracking-tight">NOVA</span><Link href="/login" className="inline-flex h-10 items-center justify-center rounded-md border bg-transparent px-4 text-sm font-medium hover:bg-[var(--muted)]">Sign in</Link></nav>
     <section className="py-24 text-center"><p className="mb-4 font-medium text-primary">Commerce, elevated</p><h1 className="mx-auto max-w-3xl text-5xl font-bold tracking-tight sm:text-6xl">A foundation ready for your next storefront.</h1><p className="mx-auto mt-6 max-w-xl text-lg text-gray-500">NOVA Commerce pairs a polished customer experience with a scalable, modular platform.</p><div className="mt-9"><Button>Explore products</Button></div></section>
     <section className="grid gap-5 md:grid-cols-3">{[
       [Store, 'Extensible catalog', 'Domain modules grow without reshaping the application.'],

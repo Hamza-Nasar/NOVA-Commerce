@@ -7,3 +7,9 @@ coverage
 .env.local
 *.log
 apps/api/prisma/dev.db
+
+# TypeScript / framework build cache
+*.tsbuildinfo
+
+# Local QA diagnostics that should not be committed
+docs/**/02-register-failed.png

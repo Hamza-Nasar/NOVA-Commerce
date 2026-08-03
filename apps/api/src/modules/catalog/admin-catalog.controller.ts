@@ -1,5 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -152,16 +151,6 @@ export class AdminCatalogController {
   @Post('products/:productId/images')
   createImage(@Param('productId') productId: string, @Body() dto: CreateImageDto) {
     return this.catalog.createImage(productId, dto);
-  }
-
-  @Post('products/:productId/images/upload')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
-  uploadImage(@Param('productId') productId: string, @UploadedFile() file: { buffer: Buffer; mimetype: string }, @Body() body: { altText?: string; sortOrder?: string; variantId?: string }) {
-    if (!file) throw new BadRequestException('Image file is required');
-    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype)) {
-      throw new BadRequestException('Only JPEG, PNG, WEBP, and GIF images are allowed');
-    }
-    return this.catalog.uploadImage(productId, file, body);
   }
 
   @Get('products/:productId/images')

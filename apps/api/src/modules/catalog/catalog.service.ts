@@ -26,29 +26,6 @@ type PaginateDelegate = {
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async uploadImage(productId: string, file: { buffer: Buffer; mimetype: string }, body: { altText?: string; sortOrder?: string; variantId?: string }) {
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
-    if (!cloudName || !uploadPreset) {
-      throw new InternalServerErrorException('Cloudinary upload is not configured');
-    }
-    const form = new FormData();
-    form.append('file', new Blob([new Uint8Array(file.buffer)], { type: file.mimetype }), 'catalog-image');
-    form.append('upload_preset', uploadPreset);
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form });
-    const payload = (await response.json()) as { secure_url?: string; public_id?: string; error?: { message?: string } };
-    if (!response.ok || !payload.secure_url || !payload.public_id) {
-      throw new BadRequestException(payload.error?.message ?? 'Cloudinary upload failed');
-    }
-    return this.createImage(productId, {
-      imageUrl: payload.secure_url,
-      publicId: payload.public_id,
-      altText: body.altText,
-      sortOrder: body.sortOrder ? Number(body.sortOrder) : undefined,
-      variantId: body.variantId,
-    });
-  }
-
   async createCategory(dto: CreateCategoryDto) {
     await this.assertUniqueCategorySlug(dto.slug);
     if (dto.parentId) await this.assertCategory(dto.parentId);
@@ -476,4 +453,3 @@ export class CatalogService {
     return image;
   }
 }
-import { InternalServerErrorException } from '@nestjs/common';

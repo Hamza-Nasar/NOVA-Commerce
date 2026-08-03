@@ -54,13 +54,14 @@ Warnings/risks:
 
 - Web lint reports only Next.js `<img>` optimization warnings; these do not fail the build.
 - Docker/PostgreSQL runtime migration and seed verification could not run because Docker Desktop was unavailable at verification time.
-- Cloudinary upload endpoint is now implemented with file type/size validation and URL/publicId persistence; it requires `CLOUDINARY_CLOUD_NAME` and `CLOUDINARY_UPLOAD_PRESET` environment values.
+- Cloudinary/S3 binary upload service is not part of the completed foundation; current catalog image records support URL/publicId metadata.
 
 ## Remaining work before Milestone 4
 
-1. Keep Cloudinary credentials configured in the runtime environment and test a real upload.
-2. Run full API/browser smoke tests after restarting the API with the latest build.
-3. Replace raw catalog `<img>` elements with `next/image` to remove the remaining lint warnings.
+1. Start Docker Desktop and run `docker compose up -d postgres redis`.
+2. Run Prisma migration deploy and seed, then smoke-test API and browser catalog flows.
+3. Configure the real Cloudinary/S3 upload adapter when media infrastructure is approved.
+4. Optionally replace raw catalog `<img>` elements with `next/image` to remove warnings.
 
 ## Recommendation
 

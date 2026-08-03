@@ -23,12 +23,8 @@ export function LoginForm() {
   const form = useForm<LoginValues>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } });
 
   const submit = form.handleSubmit(async (values) => {
-    try {
-      await login(values);
-      router.push('/profile');
-    } catch {
-      // The auth store exposes the server error in the form; keep the user on login.
-    }
+    await login(values);
+    router.push('/profile');
   });
 
   return (

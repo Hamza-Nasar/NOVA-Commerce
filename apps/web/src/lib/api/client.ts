@@ -29,7 +29,11 @@ export class ApiClient {
     }
     const payload = await response.json().catch(() => null) as ApiEnvelope<T> | { message?: string } | null;
     if (!response.ok) {
-      const message = payload && 'message' in payload ? payload.message : `API request failed (${response.status})`;
+      const message = response.status === 409
+        ? 'An account with this email or phone already exists. Please use different details or log in.'
+        : payload && 'message' in payload
+          ? payload.message
+          : 'Request could not be completed. Please try again.';
       throw new Error(message ?? `API request failed (${response.status})`);
     }
     return (payload as ApiEnvelope<T>).data;

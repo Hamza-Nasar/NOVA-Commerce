@@ -29,8 +29,12 @@ export function RegisterForm() {
   const form = useForm<RegisterValues>({ resolver: zodResolver(schema), defaultValues: { firstName: '', lastName: '', email: '', phone: '', password: '' } });
 
   const submit = form.handleSubmit(async (values) => {
-    await registerUser({ ...values, phone: values.phone || undefined });
-    router.push('/profile');
+    try {
+      await registerUser({ ...values, phone: values.phone || undefined });
+      router.push('/profile');
+    } catch {
+      // The auth store exposes the registration error in the form.
+    }
   });
 
   return (

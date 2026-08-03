@@ -14,7 +14,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
       <div className="flex items-center gap-4">
-        {brand.logo ? <Image src={brand.logo} alt={brand.name} width={64} height={64} unoptimized className="h-16 w-16 rounded-lg object-contain" /> : null}
+        {brand.logo ? <img src={brand.logo} alt={brand.name} className="h-16 w-16 rounded-lg object-contain" /> : null}
         <div>
           <h1 className="text-3xl font-bold">{brand.name}</h1>
           {brand.description ? <p className="mt-2 max-w-2xl text-muted-foreground">{brand.description}</p> : null}
@@ -25,4 +25,3 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
     </main>
   );
 }
-import Image from 'next/image';

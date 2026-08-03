@@ -30,7 +30,7 @@ export class ApiClient {
     const payload = await response.json().catch(() => null) as ApiEnvelope<T> | { message?: string } | null;
     if (!response.ok) {
       const message = response.status === 401 && path.startsWith('/auth/login')
-        ? 'Invalid email or password. Please try again.'
+        ? 'Email ya password ghalat hai. Please apni login details dobara check karein.'
         : response.status === 403
           ? 'Aap ko is action ki permission nahi hai.'
           : payload && 'message' in payload

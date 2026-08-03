@@ -29,7 +29,13 @@ export class ApiClient {
     }
     const payload = await response.json().catch(() => null) as ApiEnvelope<T> | { message?: string } | null;
     if (!response.ok) {
-      const message = payload && 'message' in payload ? payload.message : `API request failed (${response.status})`;
+      const message = response.status === 401 && path.startsWith('/auth/login')
+        ? 'Email ya password ghalat hai. Please apni login details dobara check karein.'
+        : response.status === 403
+          ? 'Aap ko is action ki permission nahi hai.'
+          : payload && 'message' in payload
+            ? payload.message
+            : `Request complete nahi ho saki. Dobara try karein.`;
       throw new Error(message ?? `API request failed (${response.status})`);
     }
     return (payload as ApiEnvelope<T>).data;

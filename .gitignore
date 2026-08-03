@@ -6,7 +6,6 @@ coverage
 .env
 .env.local
 *.log
-*.err
 apps/api/prisma/dev.db
 
 # TypeScript / framework build cache

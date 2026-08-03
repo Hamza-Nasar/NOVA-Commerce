@@ -13,7 +13,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const params = (await searchParams) ?? {};
   const page = Number(params.page ?? 1);
   const [products, categories, brands] = await Promise.all([
-    productsApi.list({ page, limit: 12, q: params.q, category: params.category, brand: params.brand, featured: params.featured === 'true' ? true : undefined, sort: params.sort as never }),
+    productsApi.list({ page, limit: 12, q: params.q, category: params.category, brand: params.brand, featured: params.featured === 'true', sort: params.sort as never }),
     categoriesApi.list({ limit: 20 }),
     brandsApi.list({ limit: 20 }),
   ]);

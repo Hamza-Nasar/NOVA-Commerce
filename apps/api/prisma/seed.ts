@@ -31,7 +31,7 @@ async function main() {
 
   const product = await prisma.product.upsert({
     where: { slug: 'nova-x1-headphones' },
-    update: { status: CatalogStatus.ACTIVE, featured: true, publishedAt: new Date(), brandId: novaBrand.id },
+    update: {},
     create: {
       name: 'NOVA X1 Wireless Headphones',
       slug: 'nova-x1-headphones',

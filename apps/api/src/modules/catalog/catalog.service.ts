@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CatalogStatus, Prisma, ProductType } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { RedisService } from '../../redis/redis.service';
 import { CatalogQueryDto } from './dto/catalog-query.dto';
 import { CreateBrandDto, UpdateBrandDto } from './dto/brand.dto';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
@@ -24,7 +25,7 @@ type PaginateDelegate = {
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly redis: RedisService) {}
 
   async uploadImage(productId: string, file: { buffer: Buffer; mimetype: string }, body: { altText?: string; sortOrder?: string; variantId?: string }) {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -118,8 +119,27 @@ export class CatalogService {
     return this.paginate(this.prisma.product as unknown as PaginateDelegate, this.productWhere(query, false), query, this.productOrder(query), productInclude);
   }
 
-  listProducts(query: CatalogQueryDto) {
-    return this.paginate(this.prisma.product as unknown as PaginateDelegate, this.productWhere(query, true), query, this.productOrder(query), productInclude);
+  async listProducts(query: CatalogQueryDto) {
+    const key = `catalog:products:${JSON.stringify(query)}`;
+    try {
+      const cached = await this.redis.client.get(key);
+      if (cached) return JSON.parse(cached);
+    } catch { /* database remains source of truth */ }
+    const result = await this.paginate(this.prisma.product as unknown as PaginateDelegate, this.productWhere(query, true), query, this.productOrder(query), productInclude);
+    try { await this.redis.client.set(key, JSON.stringify(result), 'EX', 60); } catch { /* cache is best effort */ }
+    return result;
+  }
+
+  async relatedProducts(id: string) {
+    const product = await this.prisma.product.findUnique({ where: { id }, include: { categories: true } });
+    if (!product) throw new NotFoundException('Product not found');
+    const categoryIds = product.categories.map((item) => item.categoryId);
+    return this.prisma.product.findMany({
+      where: { ...this.publicProductWhere({ id: { not: id } }), OR: [{ brandId: product.brandId ?? undefined }, { productType: product.productType }, { categories: { some: { categoryId: { in: categoryIds } } } }] },
+      take: 8,
+      orderBy: { createdAt: 'desc' },
+      include: productInclude,
+    });
   }
 
   featuredProducts(query: CatalogQueryDto) {
@@ -354,7 +374,9 @@ export class CatalogService {
       featured: query.featured,
       brandId: query.brand,
       categories: query.category ? { some: { categoryId: query.category } } : undefined,
-      OR: query.q ? [{ name: { contains: query.q, mode: 'insensitive' } }, { shortDescription: { contains: query.q, mode: 'insensitive' } }, { description: { contains: query.q, mode: 'insensitive' } }] : undefined,
+      productType: query.productType,
+      basePrice: query.minPrice !== undefined || query.maxPrice !== undefined ? { gte: query.minPrice, lte: query.maxPrice } : undefined,
+      OR: query.q ? [{ name: { contains: query.q, mode: 'insensitive' } }, { shortDescription: { contains: query.q, mode: 'insensitive' } }, { description: { contains: query.q, mode: 'insensitive' } }, { brand: { name: { contains: query.q, mode: 'insensitive' } } }, { categories: { some: { category: { name: { contains: query.q, mode: 'insensitive' } } } } }] : undefined,
     };
   }
 
@@ -366,6 +388,8 @@ export class CatalogService {
     if (query.sort === 'price_asc') return { basePrice: 'asc' };
     if (query.sort === 'price_desc') return { basePrice: 'desc' };
     if (query.sort === 'name_asc') return { name: 'asc' };
+    if (query.sort === 'name_desc') return { name: 'desc' };
+    if (query.sort === 'oldest') return { createdAt: 'asc' };
     return { createdAt: 'desc' };
   }
 

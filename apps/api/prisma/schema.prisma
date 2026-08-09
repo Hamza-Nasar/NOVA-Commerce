@@ -50,6 +50,7 @@ model User {
   updatedAt     DateTime       @updatedAt @map("updated_at")
   addresses     UserAddress[]
   refreshTokens RefreshToken[]
+  recentlyViewed RecentlyViewedProduct[]
 
   @@index([role, status])
   @@map("users")
@@ -156,11 +157,25 @@ model Product {
   variants         ProductVariant[]
   options          ProductOption[]
   images           ProductImage[]
+  recentlyViewed   RecentlyViewedProduct[]
 
   @@index([brandId])
   @@index([status, featured, publishedAt])
   @@index([createdAt])
   @@map("products")
+}
+
+model RecentlyViewedProduct {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, viewedAt])
+  @@map("recently_viewed_products")
 }
 
 model ProductCategory {

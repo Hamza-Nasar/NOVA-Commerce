@@ -9,6 +9,7 @@ import { QueueModule } from './queue/queue.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
     AuthModule,
     UsersModule,
     CatalogModule,
+    DiscoveryModule,
     HealthModule,
   ],
 })

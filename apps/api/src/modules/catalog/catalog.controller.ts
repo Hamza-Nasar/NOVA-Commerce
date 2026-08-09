@@ -11,6 +11,16 @@ export class CatalogController {
     return this.catalog.listProducts(query);
   }
 
+  @Get('search')
+  search(@Query() query: CatalogQueryDto) {
+    return this.catalog.listProducts(query);
+  }
+
+  @Get('products/:id/related')
+  related(@Param('id') id: string) {
+    return this.catalog.relatedProducts(id);
+  }
+
   @Get('products/featured')
   featuredProducts(@Query() query: CatalogQueryDto) {
     return this.catalog.featuredProducts(query);

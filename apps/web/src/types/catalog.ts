@@ -105,5 +105,8 @@ export type CatalogQuery = {
   category?: string;
   brand?: string;
   featured?: boolean;
-  sort?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
+  minPrice?: number;
+  maxPrice?: number;
+  productType?: ProductType;
+  sort?: 'relevance' | 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc';
 };

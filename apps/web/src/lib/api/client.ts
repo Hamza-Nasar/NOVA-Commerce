@@ -17,7 +17,12 @@ export class ApiClient {
     headers.set('Accept', 'application/json');
     if (!(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
     if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
-    const response = await fetch(`${this.baseUrl}${path}`, { ...init, headers, credentials: 'include' });
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, { ...init, headers, credentials: 'include' });
+    } catch {
+      throw new Error('Unable to connect to the server. Please try again in a moment.');
+    }
     if (response.status === 401 && retry && path !== '/auth/refresh') {
       try {
         const refreshed = await this.request<{ accessToken: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({}) }, false);

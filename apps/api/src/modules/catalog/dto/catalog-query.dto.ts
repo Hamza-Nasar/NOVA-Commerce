@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { CatalogStatus } from '@prisma/client';
+import { CatalogStatus, ProductType } from '@prisma/client';
 
 export class CatalogQueryDto {
   @IsOptional()
@@ -39,5 +39,19 @@ export class CatalogQueryDto {
 
   @IsOptional()
   @IsString()
-  sort?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc' = 'newest';
+  sort?: 'relevance' | 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' = 'newest';
+
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @Min(0)
+  minPrice?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @Min(0)
+  maxPrice?: number;
+
+  @IsOptional()
+  @IsEnum(ProductType)
+  productType?: ProductType;
 }

@@ -1,0 +1,5 @@
+'use client';
+import { useEffect,useState } from 'react';
+import { cartApi } from '@/lib/api/cart.api';
+import { QuantitySelector } from './quantity-selector';
+export function CartDrawer({open,onClose}:{open:boolean;onClose:()=>void}){const [cart,setCart]=useState<any>();const [error,setError]=useState('');useEffect(()=>{if(open)cartApi.get().then(setCart).catch(e=>setError(e.message))},[open]);if(!open)return null;return <aside className="fixed right-0 top-0 z-50 h-full w-full max-w-md border-l bg-background p-6 shadow-xl"><button onClick={onClose} className="float-right">Close</button><h2 className="text-xl font-semibold">Cart</h2>{error?<p role="alert" className="mt-4 text-red-500">{error}</p>:!cart?.items?.length?<p className="mt-8 text-muted-foreground">Your cart is empty.</p>:<div className="mt-6 space-y-4">{cart.items.map((i:any)=><div key={i.id} className="flex items-center justify-between gap-3"><span className="line-clamp-2">{i.product.name}</span><QuantitySelector value={i.quantity} onChange={q=>cartApi.update(i.id,q).then(setCart)}/></div>)}<div className="border-t pt-4">Total: {cart.estimatedTotal.toFixed(2)} {cart.currency}</div></div>}</aside>}

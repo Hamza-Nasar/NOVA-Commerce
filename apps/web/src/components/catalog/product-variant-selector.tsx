@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Product } from '@/types/catalog';
 import { useCatalogStore } from '@/stores/catalog.store';
 import { ProductPrice } from './product-price';
+import { ProductActions } from '@/components/cart/product-actions';
 
 export function ProductVariantSelector({ product }: { product: Product }) {
   const { selectedVariantId, selectedOptions, setSelectedVariant, setSelectedOption, resetSelection } = useCatalogStore();
@@ -43,7 +44,7 @@ export function ProductVariantSelector({ product }: { product: Product }) {
         </label>
       ) : null}
       {selectedVariant?.sku ? <p className="text-sm text-muted-foreground">SKU: {selectedVariant.sku}</p> : null}
-      <p className="text-xs text-muted-foreground">Cart and checkout are intentionally not included in Milestone 3.</p>
+      <ProductActions product={product} variantId={selectedVariant?.id} />
     </div>
   );
 }

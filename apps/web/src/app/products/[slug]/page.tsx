@@ -6,6 +6,7 @@ import { ProductVariantSelector } from '@/components/catalog/product-variant-sel
 import { ProductPrice } from '@/components/catalog/product-price';
 import { ProductGrid } from '@/components/catalog/product-grid';
 import { RecentlyViewed } from '@/components/discovery/recently-viewed';
+import { ProductActions } from '@/components/cart/product-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <h1 className="mt-2 text-3xl font-bold">{product.name}</h1>
             {product.shortDescription ? <p className="mt-3 text-muted-foreground">{product.shortDescription}</p> : null}
           </div>
-          {product.variants.length || product.options.length ? <ProductVariantSelector product={product} /> : <ProductPrice product={product} />}
+          {product.variants.length || product.options.length ? <ProductVariantSelector product={product} /> : <><ProductPrice product={product} /><ProductActions product={product} /></>}
           <div className="flex flex-wrap gap-2">
             {product.categories.map(({ category }) => <Link key={category.id} href={`/categories/${category.slug}`} className="rounded-full border px-3 py-1 text-sm">{category.name}</Link>)}
           </div>

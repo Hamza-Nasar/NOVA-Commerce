@@ -1,0 +1,4 @@
+'use client';
+import { useState } from 'react';
+import { cartApi } from '@/lib/api/cart.api';
+export function CouponForm({onApplied}:{onApplied:(c:any)=>void}){const [code,setCode]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(false);return <form className="flex gap-2" onSubmit={async e=>{e.preventDefault();setLoading(true);setError('');try{onApplied(await cartApi.applyCoupon(code))}catch(err:any){setError(err.message||'Invalid coupon')}finally{setLoading(false)}}}><input aria-label="Coupon code" value={code} onChange={e=>setCode(e.target.value)} placeholder="Coupon code" className="min-w-0 flex-1 rounded border bg-background px-3 py-2"/><button disabled={loading||!code.trim()} className="rounded bg-primary px-3 py-2 text-primary-foreground">{loading?'Applying…':'Apply'}</button>{error?<span role="alert" className="text-sm text-red-500">{error}</span>:null}</form>}

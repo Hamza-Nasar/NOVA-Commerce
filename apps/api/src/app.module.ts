@@ -10,6 +10,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
+import { CartModule } from './modules/cart/cart.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { DiscoveryModule } from './modules/discovery/discovery.module';
     UsersModule,
     CatalogModule,
     DiscoveryModule,
+    CartModule,
+    WishlistModule,
     HealthModule,
   ],
 })

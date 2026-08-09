@@ -31,6 +31,18 @@ enum ProductType {
   VARIABLE
 }
 
+enum CartStatus {
+  ACTIVE
+  CONVERTED
+  ABANDONED
+  EXPIRED
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
 model User {
   id            String         @id @default(cuid())
   uuid          String         @unique @default(uuid())
@@ -51,6 +63,8 @@ model User {
   addresses     UserAddress[]
   refreshTokens RefreshToken[]
   recentlyViewed RecentlyViewedProduct[]
+  carts         Cart[]
+  wishlists     Wishlist[]
 
   @@index([role, status])
   @@map("users")
@@ -158,11 +172,107 @@ model Product {
   options          ProductOption[]
   images           ProductImage[]
   recentlyViewed   RecentlyViewedProduct[]
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
 
   @@index([brandId])
   @@index([status, featured, publishedAt])
   @@index([createdAt])
   @@map("products")
+}
+
+model Cart {
+  id                 String       @id @default(cuid())
+  uuid               String       @unique @default(uuid())
+  userId             String?      @map("user_id")
+  guestSessionId     String?      @map("guest_session_id")
+  status             CartStatus   @default(ACTIVE)
+  currency           String       @default("USD")
+  couponId           String?      @map("coupon_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  expiresAt          DateTime?    @map("expires_at")
+  user               User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items              CartItem[]
+  coupon             Coupon?      @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  @@index([userId, status])
+  @@index([guestSessionId, status])
+  @@map("carts")
+}
+
+model CartItem {
+  id                 String   @id @default(cuid())
+  cartId             String   @map("cart_id")
+  productId          String   @map("product_id")
+  variantId          String?  @map("variant_id")
+  quantity           Int
+  unitPriceSnapshot  Decimal  @db.Decimal(12, 2) @map("unit_price_snapshot")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  cart               Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant            ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  @@unique([cartId, productId, variantId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+model Wishlist {
+  id        String         @id @default(cuid())
+  userId    String         @unique @map("user_id")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String   @map("wishlist_id")
+  productId  String   @map("product_id")
+  variantId  String?  @map("variant_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant    ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  @@unique([wishlistId, productId, variantId])
+  @@map("wishlist_items")
+}
+
+model Promotion {
+  id                  String        @id @default(cuid())
+  name                String
+  description         String?
+  type                PromotionType
+  value               Decimal       @db.Decimal(12, 2)
+  minimumOrderAmount  Decimal?      @db.Decimal(12, 2) @map("minimum_order_amount")
+  maximumDiscount     Decimal?      @db.Decimal(12, 2) @map("maximum_discount")
+  startsAt            DateTime      @map("starts_at")
+  endsAt              DateTime?     @map("ends_at")
+  usageLimit          Int?          @map("usage_limit")
+  usagePerUser        Int?          @map("usage_per_user")
+  status              CatalogStatus @default(ACTIVE)
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  coupons             Coupon[]
+  @@map("promotions")
+}
+
+model Coupon {
+  id          String        @id @default(cuid())
+  code        String        @unique
+  promotionId String        @map("promotion_id")
+  usageLimit  Int?          @map("usage_limit")
+  usageCount  Int           @default(0) @map("usage_count")
+  startsAt    DateTime      @map("starts_at")
+  expiresAt   DateTime?     @map("expires_at")
+  status      CatalogStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  promotion   Promotion     @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  carts       Cart[]
+  @@map("coupons")
 }
 
 model RecentlyViewedProduct {
@@ -207,6 +317,8 @@ model ProductVariant {
   product        Product                     @relation(fields: [productId], references: [id], onDelete: Cascade)
   optionValues   ProductVariantOptionValue[]
   images         ProductImage[]
+  cartItems      CartItem[]
+  wishlistItems  WishlistItem[]
 
   @@index([productId, status])
   @@map("product_variants")

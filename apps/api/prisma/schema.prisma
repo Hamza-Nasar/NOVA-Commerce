@@ -195,8 +195,8 @@ model Cart {
   user               User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   items              CartItem[]
   coupon             Coupon?      @relation(fields: [couponId], references: [id], onDelete: SetNull)
-  @@index([userId, status])
-  @@index([guestSessionId, status])
+  @@unique([userId, status])
+  @@unique([guestSessionId, status])
   @@map("carts")
 }
 

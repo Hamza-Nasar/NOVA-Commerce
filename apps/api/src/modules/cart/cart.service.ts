@@ -8,7 +8,11 @@ export class CartService {
   private async getCart(userId?: string, guestSessionId?: string) {
     if (!userId && !guestSessionId) throw new BadRequestException('Guest session is required');
     const where = userId ? { userId, status: 'ACTIVE' as const } : { guestSessionId, status: 'ACTIVE' as const };
-    return this.prisma.cart.upsert({ where: userId ? { userId_status: where } : { guestSessionId_status: where }, create: { userId, guestSessionId, currency: 'USD' }, update: {}, include: { items: { include: { product: true, variant: true } }, coupon: { include: { promotion: true } } } });
+    let cart = await this.prisma.cart.findFirst({ where, include: { items: { include: { product: true, variant: true } }, coupon: { include: { promotion: true } } } });
+    if (!cart) {
+      cart = await this.prisma.cart.create({ data: { userId, guestSessionId, currency: 'USD' }, include: { items: { include: { product: true, variant: true } }, coupon: { include: { promotion: true } } } });
+    }
+    return cart;
   }
 
   private async view(cart: any) {

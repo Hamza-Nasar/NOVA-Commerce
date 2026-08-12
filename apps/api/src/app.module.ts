@@ -12,6 +12,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { CartModule } from './modules/cart/cart.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     DiscoveryModule,
     CartModule,
     WishlistModule,
+    InventoryModule,
     HealthModule,
   ],
 })

@@ -15,6 +15,17 @@ export class DiscoveryService {
   }
 
   listRecentlyViewed(userId: string) {
-    return this.prisma.recentlyViewedProduct.findMany({ where: { userId, product: { status: 'ACTIVE', publishedAt: { not: null } } }, orderBy: { viewedAt: 'desc' }, take: 20, include: { product: true } });
+    return this.prisma.recentlyViewedProduct.findMany({
+      where: { userId, product: { status: 'ACTIVE', publishedAt: { not: null } } },
+      orderBy: { viewedAt: 'desc' },
+      take: 20,
+      include: {
+        product: {
+          omit: {
+            costPrice: true,
+          },
+        },
+      },
+    });
   }
 }

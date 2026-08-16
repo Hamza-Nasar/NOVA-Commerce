@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CatalogStatus, Prisma, ProductType } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { RedisService } from '../../redis/redis.service';
@@ -22,6 +22,10 @@ type PaginateDelegate = {
   count: (args: Record<string, unknown>) => Promise<number>;
   findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
 };
+
+type ProductWithPublicRelations = Prisma.ProductGetPayload<{
+  include: typeof productInclude;
+}>;
 
 @Injectable()
 export class CatalogService {
@@ -123,23 +127,25 @@ export class CatalogService {
     const key = `catalog:products:${JSON.stringify(query)}`;
     try {
       const cached = await this.redis.client.get(key);
-      if (cached) return JSON.parse(cached);
+      if (cached) return this.publicProductPage(JSON.parse(cached) as { items: unknown[]; page: number; limit: number; total: number; totalPages: number });
     } catch { /* database remains source of truth */ }
     const result = await this.paginate(this.prisma.product as unknown as PaginateDelegate, this.productWhere(query, true), query, this.productOrder(query), productInclude);
-    try { await this.redis.client.set(key, JSON.stringify(result), 'EX', 60); } catch { /* cache is best effort */ }
-    return result;
+    const publicResult = this.publicProductPage(result);
+    try { await this.redis.client.set(key, JSON.stringify(publicResult), 'EX', 60); } catch { /* cache is best effort */ }
+    return publicResult;
   }
 
   async relatedProducts(id: string) {
     const product = await this.prisma.product.findUnique({ where: { id }, include: { categories: true } });
     if (!product) throw new NotFoundException('Product not found');
     const categoryIds = product.categories.map((item) => item.categoryId);
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: { ...this.publicProductWhere({ id: { not: id } }), OR: [{ brandId: product.brandId ?? undefined }, { productType: product.productType }, { categories: { some: { categoryId: { in: categoryIds } } } }] },
       take: 8,
       orderBy: { createdAt: 'desc' },
       include: productInclude,
     });
+    return products.map((item) => this.publicProduct(item));
   }
 
   featuredProducts(query: CatalogQueryDto) {
@@ -159,7 +165,7 @@ export class CatalogService {
   async getProductBySlug(slug: string) {
     const product = await this.prisma.product.findFirst({ where: this.publicProductWhere({ slug }), include: productInclude });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+    return this.publicProduct(product);
   }
 
   async updateProduct(id: string, dto: UpdateProductDto) {
@@ -409,6 +415,27 @@ export class CatalogService {
     return { items, page, limit, total, totalPages: Math.ceil(total / limit) };
   }
 
+  private publicProductPage(page: { items: unknown[]; page: number; limit: number; total: number; totalPages: number }) {
+    return {
+      ...page,
+      items: page.items.map((item) => this.publicProduct(item as ProductWithPublicRelations)),
+    };
+  }
+
+  private publicProduct(product: ProductWithPublicRelations) {
+    const { costPrice: productCostPrice, ...safeProduct } = product;
+    void productCostPrice;
+
+    return {
+      ...safeProduct,
+      variants: product.variants.map((variant) => {
+        const { costPrice: variantCostPrice, ...safeVariant } = variant;
+        void variantCostPrice;
+        return safeVariant;
+      }),
+    };
+  }
+
   private async validateProductPayload(dto: Partial<CreateProductDto>, currentId?: string) {
     if (dto.slug) await this.assertUniqueProductSlug(dto.slug, currentId);
     if (dto.brandId) await this.assertBrand(dto.brandId);
@@ -490,4 +517,3 @@ export class CatalogService {
     return image;
   }
 }
-import { InternalServerErrorException } from '@nestjs/common';

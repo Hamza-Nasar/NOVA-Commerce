@@ -1,4 +1,4 @@
-import { CatalogStatus, PrismaClient, ProductType } from '@prisma/client';
+import { CatalogStatus, PrismaClient, ProductType, PromotionType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -69,8 +69,9 @@ async function main() {
   });
 
   const existingVariant = await prisma.productVariant.findUnique({ where: { sku: 'NOVA-X1-BLK' } });
-  if (!existingVariant) {
-    await prisma.productVariant.create({
+  const variant =
+    existingVariant ??
+    (await prisma.productVariant.create({
       data: {
         productId: product.id,
         name: 'Black / Standard',
@@ -83,8 +84,122 @@ async function main() {
         status: CatalogStatus.ACTIVE,
         isDefault: true,
       },
-    });
-  }
+    }));
+
+  const warehouse = await prisma.warehouse.upsert({
+    where: { code: 'MAIN' },
+    update: { status: 'ACTIVE' },
+    create: {
+      name: 'Main Fulfillment Warehouse',
+      code: 'MAIN',
+      city: 'Karachi',
+      country: 'PK',
+      status: 'ACTIVE',
+    },
+  });
+
+  await prisma.inventoryLevel.upsert({
+    where: {
+      warehouseId_productVariantId: {
+        warehouseId: warehouse.id,
+        productVariantId: variant.id,
+      },
+    },
+    update: {
+      quantityAvailable: 50,
+      quantityReserved: 0,
+      reorderLevel: 5,
+    },
+    create: {
+      warehouseId: warehouse.id,
+      productVariantId: variant.id,
+      quantityAvailable: 50,
+      quantityReserved: 0,
+      reorderLevel: 5,
+    },
+  });
+
+  const now = new Date();
+  const startedAt = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const future = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const expired = new Date(now.getTime() - 60 * 60 * 1000);
+
+  const launchPromotion = await prisma.promotion.upsert({
+    where: { id: 'seed-promo-launch' },
+    update: {
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      endsAt: future,
+    },
+    create: {
+      id: 'seed-promo-launch',
+      name: 'Launch verification discount',
+      type: PromotionType.PERCENTAGE,
+      value: 10,
+      minimumOrderAmount: 50,
+      maximumDiscount: 25,
+      startsAt: startedAt,
+      endsAt: future,
+      status: CatalogStatus.ACTIVE,
+    },
+  });
+
+  await prisma.coupon.upsert({
+    where: { code: 'NOVA10' },
+    update: {
+      promotionId: launchPromotion.id,
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      expiresAt: future,
+      usageLimit: 100,
+    },
+    create: {
+      code: 'NOVA10',
+      promotionId: launchPromotion.id,
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      expiresAt: future,
+      usageLimit: 100,
+    },
+  });
+
+  await prisma.coupon.upsert({
+    where: { code: 'NOVAEXPIRED' },
+    update: {
+      promotionId: launchPromotion.id,
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      expiresAt: expired,
+    },
+    create: {
+      code: 'NOVAEXPIRED',
+      promotionId: launchPromotion.id,
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      expiresAt: expired,
+    },
+  });
+
+  await prisma.coupon.upsert({
+    where: { code: 'NOVALIMIT' },
+    update: {
+      promotionId: launchPromotion.id,
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      expiresAt: future,
+      usageLimit: 1,
+      usageCount: 1,
+    },
+    create: {
+      code: 'NOVALIMIT',
+      promotionId: launchPromotion.id,
+      status: CatalogStatus.ACTIVE,
+      startsAt: startedAt,
+      expiresAt: future,
+      usageLimit: 1,
+      usageCount: 1,
+    },
+  });
 }
 
 main()

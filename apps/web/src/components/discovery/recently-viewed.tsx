@@ -8,11 +8,7 @@ import { ProductGrid } from '@/components/catalog/product-grid';
 const KEY = 'nova-recently-viewed';
 
 export function RecentlyViewed({ product }: { product?: Product }) {
-  const [items, setItems] = useState<Product[]>(() => {
-    if (typeof window === 'undefined') return [];
-
-    return JSON.parse(localStorage.getItem(KEY) ?? '[]') as Product[];
-  });
+  const [items, setItems] = useState<Product[]>([]);
 
   useEffect(() => {
     const current = JSON.parse(localStorage.getItem(KEY) ?? '[]') as Product[];
